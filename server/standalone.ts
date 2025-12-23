@@ -8,7 +8,7 @@ import { GAME_CONFIG } from '../shared/constants.js';
 import { ClientMessage, ServerMessage, SnakeNetworkState } from '../shared/types.js';
 
 const PORT = parseInt(process.env.PORT || '8080');
-const STATIC_DIR = join(process.cwd(), 'dist', 'client');
+const STATIC_DIR = join(process.cwd(), 'dist');
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html',
