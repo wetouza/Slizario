@@ -1,0 +1,19 @@
+import { defineConfig } from 'vite';
+import path from 'path';
+
+export default defineConfig({
+  root: 'client',
+  resolve: {
+    alias: {
+      '@shared': path.resolve(__dirname, 'shared')
+    }
+  },
+  server: {
+    port: 3000,
+    open: true,
+    host: '0.0.0.0'
+  },
+  build: {
+    outDir: '../dist/client'
+  }
+});

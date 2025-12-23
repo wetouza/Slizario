@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a15">
+  <title>Slizario</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      background: #0a0a15;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    #game-canvas {
+      display: block;
+      cursor: none;
+    }
+    
+    /* MAIN MENU */
+    #menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a15 70%);
+      overflow: hidden;
+    }
+    
+    #menu::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(78, 205, 196, 0.15) 0%, transparent 25%),
+        radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 25%),
+        radial-gradient(circle at 40% 40%, rgba(69, 183, 209, 0.1) 0%, transparent 20%);
+      animation: bgFloat 20s ease-in-out infinite;
+    }
+    
+    @keyframes bgFloat {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(2%, 2%) rotate(1deg); }
+      66% { transform: translate(-1%, 1%) rotate(-1deg); }
+    }
+    
+    .menu-container {
+      position: relative;
+      display: flex;
+      gap: 30px;
+      align-items: stretch;
+      max-width: 900px;
+      width: 95%;
+    }
+    
+    .menu-main {
+      flex: 1;
+      text-align: center;
+      padding: 40px 50px;
+      background: linear-gradient(135deg, rgba(20, 20, 40, 0.9) 0%, rgba(10, 10, 25, 0.95) 100%);
+      border-radius: 24px;
+      border: 1px solid rgba(78, 205, 196, 0.2);
+      box-shadow: 0 0 60px rgba(78, 205, 196, 0.1);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+    
+    .menu-main::before {
+      display: none;
+    }
+    
+    @keyframes borderGlow {
+      0%, 100% { background-position: 0% 50%; opacity: 0.3; }
+      50% { background-position: 100% 50%; opacity: 0.5; }
+    }
+    
+    .menu-sidebar {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .sidebar-box {
+      background: linear-gradient(135deg, rgba(20, 20, 40, 0.9) 0%, rgba(10, 10, 25, 0.95) 100%);
+      border-radius: 16px;
+      border: 1px solid rgba(78, 205, 196, 0.2);
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .sidebar-box h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      color: #4ECDC4;
+      margin-bottom: 15px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(78, 205, 196, 0.2);
+    }
+    
+    /* Logo */
+    .logo-container {
+      margin-bottom: 10px;
+    }
+    
+    .logo-snake {
+      font-size: 60px;
+      margin-bottom: 5px;
+      animation: snakeBounce 2s ease-in-out infinite;
+    }
+    
+    @keyframes snakeBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    #menu h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 48px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #4ECDC4 0%, #45B7D1 50%, #4ECDC4 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: textShine 3s linear infinite;
+      margin-bottom: 5px;
+      letter-spacing: 6px;
+    }
+    
+    @keyframes textShine {
+      to { background-position: 200% center; }
+    }
+    
+    #menu .subtitle {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 12px;
+      margin-bottom: 30px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    
+    /* Skin selector */
+    .skin-selector {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
+    
+    .skin-option {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .skin-option:hover {
+      transform: scale(1.15);
+    }
+    
+    .skin-option.selected {
+      border-color: white;
+      box-shadow: 0 0 20px currentColor;
+    }
+    
+    .skin-option::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .skin-option.selected::after {
+      opacity: 1;
+    }
+    
+    #menu input {
+      width: 100%;
+      padding: 16px 22px;
+      font-size: 16px;
+      font-family: 'Segoe UI', sans-serif;
+      border: 2px solid rgba(78, 205, 196, 0.2);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      color: white;
+      margin-bottom: 20px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    
+    #menu input:focus {
+      border-color: rgba(78, 205, 196, 0.6);
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 0 25px rgba(78, 205, 196, 0.15);
+    }
+    
+    #menu input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+    
+    #menu button.play-btn {
+      width: 100%;
+      padding: 18px 40px;
+      font-size: 20px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 50%, #4ECDC4 100%);
+      background-size: 200% auto;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      cursor: pointer;
+      letter-spacing: 4px;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 25px rgba(78, 205, 196, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #menu button.play-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+    
+    #menu button.play-btn:hover {
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 35px rgba(78, 205, 196, 0.5);
+    }
+    
+    #menu button.play-btn:hover::before {
+      left: 100%;
+    }
+    
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .stat-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 20px;
+      color: #4ECDC4;
+      font-weight: 700;
+    }
+    
+    .stat-label {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+    
+    /* How to play */
+    .how-to-play {
+      text-align: left;
+    }
+    
+    .tip-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+    }
+    
+    .tip-item:last-child {
+      border-bottom: none;
+    }
+    
+    .tip-icon {
+      font-size: 20px;
+      width: 30px;
+      text-align: center;
+    }
+    
+    /* Online players */
+    .online-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 13px;
+    }
+    
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      background: #4ECDC4;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(78, 205, 196, 0.7); }
+      50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(78, 205, 196, 0); }
+    }
+    
+    /* Particles */
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #4ECDC4;
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: float 15s infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+    }
+    
+    /* Social buttons */
+    .social-links {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .social-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 18px;
+    }
+    
+    .social-btn:hover {
+      background: rgba(78, 205, 196, 0.2);
+      border-color: rgba(78, 205, 196, 0.4);
+      transform: translateY(-2px);
+    }
+    
+    /* HUD */
+    #hud {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: white;
+      z-index: 50;
+    }
+    #hud .length-display {
+      background: linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(26, 26, 46, 0.9));
+      padding: 15px 25px;
+      border-radius: 12px;
+      border: 1px solid rgba(78, 205, 196, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    #hud .length-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    #hud .length-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #4ECDC4;
+    }
+    
+    #leaderboard {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(180deg, rgba(15, 15, 35, 0.9), rgba(26, 26, 46, 0.9));
+      padding: 18px;
+      border-radius: 12px;
+      color: white;
+      z-index: 50;
+      min-width: 180px;
+      border: 1px solid rgba(78, 205, 196, 0.3);
+    }
+    #leaderboard h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      margin-bottom: 12px;
+      color: #4ECDC4;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(78, 205, 196, 0.3);
+    }
+    #leaderboard-list {
+      list-style: none;
+    }
+    #leaderboard-list li {
+      padding: 5px 0;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    #leaderboard-list li.self {
+      color: #4ECDC4;
+      font-weight: 700;
+    }
+    
+    #minimap {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 150px;
+      height: 150px;
+      background: rgba(15, 15, 35, 0.9);
+      border: 1px solid rgba(78, 205, 196, 0.3);
+      border-radius: 10px;
+      z-index: 50;
+    }
+    
+    .hidden { display: none !important; }
+    
+    /* Death screen */
+    #death-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    #death-screen h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: #ff4757;
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    #death-screen .final-score {
+      font-size: 20px;
+      color: white;
+      margin-bottom: 30px;
+    }
+    #death-screen .final-score span {
+      color: #4ECDC4;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 36px;
+    }
+    #death-screen button {
+      padding: 16px 40px;
+      font-size: 18px;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #4ECDC4, #44A08D);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      cursor: pointer;
+      letter-spacing: 2px;
+    }
+    
+    @media (max-width: 800px) {
+      .menu-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .menu-sidebar {
+        width: 100%;
+        max-width: 400px;
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .sidebar-box {
+        flex: 1;
+        min-width: 140px;
+      }
+      .menu-main { padding: 30px; }
+      #menu h1 { font-size: 36px; }
+      #leaderboard { display: none; }
+      #minimap { width: 100px; height: 100px; }
+    }
+    
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      backdrop-filter: blur(5px);
+    }
+    
+    .modal-content {
+      background: linear-gradient(135deg, rgba(20, 20, 40, 0.98) 0%, rgba(10, 10, 25, 0.98) 100%);
+      border-radius: 20px;
+      border: 1px solid rgba(78, 205, 196, 0.3);
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 0 60px rgba(78, 205, 196, 0.2);
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.3s;
+    }
+    
+    .modal-close:hover {
+      background: rgba(255, 71, 87, 0.5);
+    }
+    
+    .modal-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 24px;
+      color: #4ECDC4;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .modal-section {
+      margin-bottom: 20px;
+    }
+    
+    .modal-section h4 {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .control-row {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    
+    .control-key {
+      background: linear-gradient(135deg, #4ECDC4, #44A08D);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      margin-right: 15px;
+      min-width: 80px;
+      text-align: center;
+    }
+    
+    .control-desc {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+    }
+    
+    /* Settings */
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .setting-label {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+    }
+    
+    .setting-toggle {
+      width: 50px;
+      height: 26px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .setting-toggle.active {
+      background: #4ECDC4;
+    }
+    
+    .setting-toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: all 0.3s;
+    }
+    
+    .setting-toggle.active::after {
+      left: 27px;
+    }
+    
+    .setting-slider {
+      width: 120px;
+      height: 6px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+    
+    .setting-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #4ECDC4;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    /* Leaderboard modal */
+    .lb-entry {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    
+    .lb-rank {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 15px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .lb-entry:nth-child(1) .lb-rank { background: linear-gradient(135deg, #FFD700, #FFA500); color: #1a1a2e; }
+    .lb-entry:nth-child(2) .lb-rank { background: linear-gradient(135deg, #C0C0C0, #A0A0A0); color: #1a1a2e; }
+    .lb-entry:nth-child(3) .lb-rank { background: linear-gradient(135deg, #CD7F32, #8B4513); color: #1a1a2e; }
+    
+    .lb-name {
+      flex: 1;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+    }
+    
+    .lb-score {
+      font-family: 'Orbitron', sans-serif;
+      color: #4ECDC4;
+      font-size: 16px;
+    }
+    
+    /* Help modal */
+    .help-item {
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .help-item h5 {
+      color: #4ECDC4;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    
+    .help-item p {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+    <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
+    <div class="particle" style="left: 35%; animation-delay: 4s;"></div>
+    <div class="particle" style="left: 50%; animation-delay: 1s;"></div>
+    <div class="particle" style="left: 65%; animation-delay: 3s;"></div>
+    <div class="particle" style="left: 80%; animation-delay: 5s;"></div>
+    <div class="particle" style="left: 90%; animation-delay: 2.5s;"></div>
+    
+    <div class="menu-container">
+      <div class="menu-main">
+        <div class="logo-container">
+          <div class="logo-snake">🐍</div>
+          <h1>SLIZARIO</h1>
+          <div class="subtitle">Eat • Grow • Dominate</div>
+        </div>
+        
+        <div class="online-indicator">
+          <div class="online-dot"></div>
+          <span><span id="online-count">6</span> players online</span>
+        </div>
+        
+        <div class="skin-selector">
+          <div class="skin-option selected" style="background: #FF6B6B;" data-color="#FF6B6B"></div>
+          <div class="skin-option" style="background: #4ECDC4;" data-color="#4ECDC4"></div>
+          <div class="skin-option" style="background: #45B7D1;" data-color="#45B7D1"></div>
+          <div class="skin-option" style="background: #96CEB4;" data-color="#96CEB4"></div>
+          <div class="skin-option" style="background: #DDA0DD;" data-color="#DDA0DD"></div>
+          <div class="skin-option" style="background: #F7DC6F;" data-color="#F7DC6F"></div>
+        </div>
+        
+        <input type="text" id="name-input" placeholder="Enter your nickname" maxlength="15" autocomplete="off">
+        <button class="play-btn" id="play-btn">▶ PLAY</button>
+        
+        <div class="social-links">
+          <div class="social-btn" id="btn-controls" title="Controls">🎮</div>
+          <div class="social-btn" id="btn-settings" title="Settings">⚙️</div>
+          <div class="social-btn" id="btn-leaderboard" title="Leaderboard">🏆</div>
+          <div class="social-btn" id="btn-help" title="Help">❓</div>
+        </div>
+      </div>
+      
+      <div class="menu-sidebar">
+        <div class="sidebar-box">
+          <h3>📊 Your Stats</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="stat-best">0</div>
+              <div class="stat-label">Best Score</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-games">0</div>
+              <div class="stat-label">Games</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-kills">0</div>
+              <div class="stat-label">Kills</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-time">0m</div>
+              <div class="stat-label">Play Time</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar-box how-to-play">
+          <h3>🎯 How to Play</h3>
+          <div class="tip-item">
+            <span class="tip-icon">🖱️</span>
+            <span>Move mouse to control direction</span>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">🍎</span>
+            <span>Eat food to grow longer</span>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">💀</span>
+            <span>Hit other snakes to kill them</span>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">⚠️</span>
+            <span>Avoid walls and enemy bodies</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="hud" class="hidden">
+    <div class="length-display">
+      <div class="length-label">Length</div>
+      <div class="length-value" id="length">0</div>
+    </div>
+  </div>
+  
+  <div id="leaderboard" class="hidden">
+    <h3>Leaderboard</h3>
+    <ol id="leaderboard-list"></ol>
+  </div>
+  
+  <canvas id="minimap" class="hidden"></canvas>
+  <canvas id="game-canvas"></canvas>
+  
+  <div id="death-screen" class="hidden">
+    <h2>GAME OVER</h2>
+    <div class="final-score">Final Length: <span id="final-length">0</span></div>
+    <button id="restart-btn">PLAY AGAIN</button>
+  </div>
+  
+  <!-- Modal Popups -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-content" id="modal-box">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div id="modal-inner"></div>
+    </div>
+  </div>
+  
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
