@@ -6,8 +6,10 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "client": "vite client --host 0.0.0.0",
     "server": "tsx watch server/index.ts",
-    "build": "vite build client && tsc -p tsconfig.server.json",
-    "start": "node dist/server/standalone.js"
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build client",
+    "build:server": "tsc -p tsconfig.server.json",
+    "start": "node dist/server/server/standalone.js"
   },
   "dependencies": {
     "ws": "^8.14.2"
